@@ -1,11 +1,15 @@
 use rayon::prelude::*;
 
 fn main() {
-    let max_change = 500;
+    let max_change = 100;
+    let max_coin_denomination = 100;
 
-    for coin_count in 2..8 {
-        let mut averages = (IteratorState {
-            max_change,
+    for coin_count in 2..9 {
+        use std::time::Instant;
+        let start = Instant::now();
+
+        let (coins, total) = (IteratorState {
+            max_coin_denomination,
             state: (1..=coin_count).collect::<Vec<_>>(),
         })
         .par_bridge()
@@ -13,33 +17,21 @@ fn main() {
             let count = count_coins(max_change, &coins);
             (coins, count)
         })
-        .collect::<Vec<_>>();
-
-        averages.par_sort_unstable_by(|(_, total_a), (_, total_b)| total_a.cmp(total_b));
-
-        let best = if let Some((_, best)) = averages.get(0) {
-            *best
-        } else {
-            continue;
-        };
+        .min_by(|(_, total_a), (_, total_b)| total_a.cmp(total_b))
+        .expect("The list is not empty");
 
         println!(
-            "The best result is an average of {} coins",
-            (best as f64) / (max_change as f64)
+            "The best result is an average of {} coins, found in {:.2?}",
+            (total as f64) / (max_change as f64),
+            start.elapsed()
         );
 
-        for (coins, result) in averages.into_iter() {
-            if result > best {
-                break;
-            }
-
-            println!("  {:?}", coins);
-        }
+        println!("  {:?}", coins);
     }
 }
 
 struct IteratorState {
-    max_change: usize,
+    max_coin_denomination: usize,
     state: Vec<usize>,
 }
 
@@ -48,7 +40,7 @@ impl Iterator for IteratorState {
 
     fn next(&mut self) -> Option<Self::Item> {
         for i in (1..self.state.len()).rev() {
-            if self.state[i] < self.max_change - 1 {
+            if self.state[i] < self.max_coin_denomination - 1 {
                 let from = self.state[i];
                 self.state[i] += 1;
                 for j in (i + 1)..self.state.len() {
