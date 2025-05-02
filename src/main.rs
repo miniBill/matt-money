@@ -1,14 +1,14 @@
 use rayon::prelude::*;
 
 fn main() {
-    let max_change = 100;
-    let max_coin_denomination = 100;
+    let max_change = 50;
+    let max_coin_denomination = 50;
 
-    for coin_count in 2..9 {
+    for coin_count in 2..=9 {
         use std::time::Instant;
         let start = Instant::now();
 
-        let (coins, total) = (IteratorState {
+        if let Some((coins, total)) = (IteratorState {
             max_coin_denomination,
             state: (1..=coin_count).collect::<Vec<_>>(),
         })
@@ -18,15 +18,15 @@ fn main() {
             (coins, count)
         })
         .min_by(|(_, total_a), (_, total_b)| total_a.cmp(total_b))
-        .expect("The list is not empty");
+        {
+            println!(
+                "The best result is an average of {} coins, found in {:.2?}",
+                (total as f64) / (max_change as f64),
+                start.elapsed()
+            );
 
-        println!(
-            "The best result is an average of {} coins, found in {:.2?}",
-            (total as f64) / (max_change as f64),
-            start.elapsed()
-        );
-
-        println!("  {:?}", coins);
+            println!("  {:?}", coins);
+        }
     }
 }
 
@@ -39,8 +39,9 @@ impl Iterator for IteratorState {
     type Item = Vec<usize>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        let res = self.state.clone();
         for i in (1..self.state.len()).rev() {
-            if self.state[i] < self.max_coin_denomination - 1 {
+            if self.state[i] < self.max_coin_denomination {
                 let from = self.state[i];
                 self.state[i] += 1;
                 for j in (i + 1)..self.state.len() {
@@ -52,14 +53,14 @@ impl Iterator for IteratorState {
                 return None;
             }
         }
-        Some(self.state.clone())
+        Some(res)
     }
 }
 
 fn count_coins(max_change: usize, coins: &Vec<usize>) -> usize {
     let mut counts: Vec<usize> = vec![0];
 
-    for i in 1..max_change {
+    for i in 1..=max_change {
         let mut best = i;
         for coin in coins.into_iter() {
             if i == *coin {
