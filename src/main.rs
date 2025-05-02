@@ -3,9 +3,9 @@ use rayon::prelude::*;
 type Coin = u8;
 
 fn main() {
-    let max_change = 20;
-    let max_coin_denomination = 20;
-    let max_coin_count = 20;
+    let max_change = 18;
+    let max_coin_denomination = 18;
+    let max_coin_count = 18;
 
     for coin_count in 2..=max_coin_count {
         use std::time::Instant;
@@ -13,7 +13,7 @@ fn main() {
 
         if let Some((coins, total)) = (IteratorState {
             max_coin_denomination,
-            state: (1..=coin_count).collect::<Vec<_>>(),
+            state: (0..coin_count).collect::<Vec<_>>(),
         })
         .par_bridge()
         .map(|coins| {
@@ -42,7 +42,15 @@ impl Iterator for IteratorState {
     type Item = Vec<Coin>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let res = self.state.clone();
+        if self.state.is_empty() {
+            return None;
+        }
+
+        if self.state[0] == 0 {
+            self.state = (1..=(self.state.len() as Coin)).collect::<Vec<_>>();
+            return Some(self.state.clone());
+        }
+
         for i in (1..self.state.len()).rev() {
             if self.state[i] < self.max_coin_denomination {
                 let from = self.state[i];
@@ -50,13 +58,10 @@ impl Iterator for IteratorState {
                 for j in (i + 1)..self.state.len() {
                     self.state[j] = from + ((j - i) as Coin);
                 }
-                break;
-            }
-            if i == 1 {
-                return None;
+                return Some(self.state.clone());
             }
         }
-        Some(res)
+        return None;
     }
 }
 
