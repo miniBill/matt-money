@@ -1,10 +1,13 @@
 use rayon::prelude::*;
 
-fn main() {
-    let max_change = 50;
-    let max_coin_denomination = 50;
+type Coin = u8;
 
-    for coin_count in 2..=9 {
+fn main() {
+    let max_change = 20;
+    let max_coin_denomination = 20;
+    let max_coin_count = 20;
+
+    for coin_count in 2..=max_coin_count {
         use std::time::Instant;
         let start = Instant::now();
 
@@ -17,10 +20,10 @@ fn main() {
             let count = count_coins(max_change, &coins);
             (coins, count)
         })
-        .min_by(|(_, total_a), (_, total_b)| total_a.cmp(total_b))
+        .min_by_key(|(_, total)| *total)
         {
             println!(
-                "The best result is an average of {} coins, found in {:.2?}",
+                "The best result for {coin_count} coins is an average of {} coins, found in {:.2?}",
                 (total as f64) / (max_change as f64),
                 start.elapsed()
             );
@@ -31,12 +34,12 @@ fn main() {
 }
 
 struct IteratorState {
-    max_coin_denomination: usize,
-    state: Vec<usize>,
+    max_coin_denomination: Coin,
+    state: Vec<Coin>,
 }
 
 impl Iterator for IteratorState {
-    type Item = Vec<usize>;
+    type Item = Vec<Coin>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let res = self.state.clone();
@@ -45,7 +48,7 @@ impl Iterator for IteratorState {
                 let from = self.state[i];
                 self.state[i] += 1;
                 for j in (i + 1)..self.state.len() {
-                    self.state[j] = from + j - i;
+                    self.state[j] = from + ((j - i) as Coin);
                 }
                 break;
             }
@@ -57,11 +60,12 @@ impl Iterator for IteratorState {
     }
 }
 
-fn count_coins(max_change: usize, coins: &Vec<usize>) -> usize {
-    let mut counts: Vec<usize> = vec![0];
+fn count_coins(max_change: Coin, coins: &Vec<Coin>) -> usize {
+    let mut counts: Vec<usize> = Vec::with_capacity(max_change as usize);
+    counts.push(0);
 
     for i in 1..=max_change {
-        let mut best = i;
+        let mut best = i as usize;
         for coin in coins.into_iter() {
             if i == *coin {
                 best = 1;
@@ -73,7 +77,7 @@ fn count_coins(max_change: usize, coins: &Vec<usize>) -> usize {
             if i - *coin == 4 && counts.len() == 4 {
                 println!("{:?}", coins);
             }
-            best = std::cmp::min(best, counts[i - *coin] + 1);
+            best = std::cmp::min(best, counts[(i - *coin) as usize] + 1);
         }
 
         counts.push(best);
