@@ -1,6 +1,6 @@
 use rayon::prelude::*;
 
-type Coin = u16;
+type Coin = u8;
 
 fn main() {
     let max_change = 20;
@@ -11,7 +11,7 @@ fn main() {
         use std::time::Instant;
         let start = Instant::now();
 
-        if let Some((solutions, total)) = (IteratorState {
+        if let Some((solution, total)) = (IteratorState {
             max_coin_denomination,
             state: (0..coin_count).collect::<Vec<_>>(),
         })
@@ -52,7 +52,7 @@ fn main() {
             // for coins in solutions {
             //     println!("  {:?}", coins);
             // }
-            println!("  {:?}", solutions);
+            println!("  {:?}", solution);
         }
     }
 }
@@ -76,13 +76,14 @@ impl Iterator for IteratorState {
         }
 
         for i in (1..self.state.len()).rev() {
-            if self.state[i] < self.max_coin_denomination + 1 - ((i - self.state.len()) as Coin) {
+            if self.state[i] < self.max_coin_denomination + 1 - (self.state.len() - i) as Coin {
                 let from = self.state[i];
                 self.state[i] += 1;
                 for j in (i + 1)..self.state.len() {
                     let next = from + ((j - i) as Coin);
                     self.state[j] = next;
                 }
+                // println!("{:?}", self.state);
                 return Some(self.state.clone());
             }
         }
