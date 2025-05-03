@@ -5,7 +5,7 @@ type Coin = u16;
 fn main() {
     let max_change = 500;
     let max_coin_denomination = 200;
-    let max_coin_count = 6;
+    let max_coin_count = 9;
 
     for coin_count in 2..=max_coin_count {
         use std::time::Instant;
