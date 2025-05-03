@@ -1,11 +1,11 @@
 use rayon::prelude::*;
 
-type Coin = u8;
+type Coin = u16;
 
 fn main() {
-    let max_change = 18;
-    let max_coin_denomination = 18;
-    let max_coin_count = 18;
+    let max_change = 500;
+    let max_coin_denomination = 200;
+    let max_coin_count = 9;
 
     for coin_count in 2..=max_coin_count {
         use std::time::Instant;
@@ -52,11 +52,12 @@ impl Iterator for IteratorState {
         }
 
         for i in (1..self.state.len()).rev() {
-            if self.state[i] < self.max_coin_denomination {
+            if self.state[i] < self.max_coin_denomination + 1 - ((i - self.state.len()) as Coin) {
                 let from = self.state[i];
                 self.state[i] += 1;
                 for j in (i + 1)..self.state.len() {
-                    self.state[j] = from + ((j - i) as Coin);
+                    let next = from + ((j - i) as Coin);
+                    self.state[j] = next;
                 }
                 return Some(self.state.clone());
             }
