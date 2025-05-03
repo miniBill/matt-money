@@ -3,15 +3,15 @@ use rayon::prelude::*;
 type Coin = u16;
 
 fn main() {
-    let max_change = 500;
-    let max_coin_denomination = 200;
-    let max_coin_count = 9;
+    let max_change = 20;
+    let max_coin_denomination = 20;
+    let max_coin_count = 20;
 
     for coin_count in 2..=max_coin_count {
         use std::time::Instant;
         let start = Instant::now();
 
-        if let Some((coins, total)) = (IteratorState {
+        if let Some((solutions, total)) = (IteratorState {
             max_coin_denomination,
             state: (0..coin_count).collect::<Vec<_>>(),
         })
@@ -20,6 +20,27 @@ fn main() {
             let count = count_coins(max_change, &coins);
             (coins, count)
         })
+        // .fold(
+        //     || (vec![], (max_change * max_change) as usize),
+        //     |(mut acc, best), (coins, total)| match total.cmp(&best) {
+        //         std::cmp::Ordering::Less => (vec![coins], total),
+        //         std::cmp::Ordering::Equal => {
+        //             acc.push(coins);
+        //             (acc, best)
+        //         }
+        //         std::cmp::Ordering::Greater => (acc, best),
+        //     },
+        // )
+        // .reduce_with(|(mut left, left_best), (mut right, right_best)| {
+        //     match left_best.cmp(&right_best) {
+        //         std::cmp::Ordering::Less => (left, left_best),
+        //         std::cmp::Ordering::Equal => {
+        //             left.append(&mut right);
+        //             (left, left_best)
+        //         }
+        //         std::cmp::Ordering::Greater => (right, right_best),
+        //     }
+        // })
         .min_by_key(|(_, total)| *total)
         {
             println!(
@@ -28,7 +49,10 @@ fn main() {
                 start.elapsed()
             );
 
-            println!("  {:?}", coins);
+            // for coins in solutions {
+            //     println!("  {:?}", coins);
+            // }
+            println!("  {:?}", solutions);
         }
     }
 }
