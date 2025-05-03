@@ -1,11 +1,11 @@
 use rayon::prelude::*;
 
-type Coin = u8;
+type Coin = u16;
 
 fn main() {
-    let max_change = 20;
-    let max_coin_denomination = 20;
-    let max_coin_count = 20;
+    let max_change = 500;
+    let max_coin_denomination = 200;
+    let max_coin_count = 6;
 
     for coin_count in 2..=max_coin_count {
         use std::time::Instant;
@@ -20,39 +20,40 @@ fn main() {
             let count = count_coins(max_change, &coins);
             (coins, count)
         })
-        // .fold(
-        //     || (vec![], (max_change * max_change) as usize),
-        //     |(mut acc, best), (coins, total)| match total.cmp(&best) {
-        //         std::cmp::Ordering::Less => (vec![coins], total),
-        //         std::cmp::Ordering::Equal => {
-        //             acc.push(coins);
-        //             (acc, best)
-        //         }
-        //         std::cmp::Ordering::Greater => (acc, best),
-        //     },
-        // )
-        // .reduce_with(|(mut left, left_best), (mut right, right_best)| {
-        //     match left_best.cmp(&right_best) {
-        //         std::cmp::Ordering::Less => (left, left_best),
-        //         std::cmp::Ordering::Equal => {
-        //             left.append(&mut right);
-        //             (left, left_best)
-        //         }
-        //         std::cmp::Ordering::Greater => (right, right_best),
-        //     }
-        // })
-        .min_by_key(|(_, total)| *total)
+        .fold(
+            || (vec![], (max_change * max_change) as usize),
+            |(mut acc, best), (coins, total)| match total.cmp(&best) {
+                std::cmp::Ordering::Less => (vec![coins], total),
+                std::cmp::Ordering::Equal => {
+                    acc.push(coins);
+                    (acc, best)
+                }
+                std::cmp::Ordering::Greater => (acc, best),
+            },
+        )
+        .reduce_with(|(mut left, left_best), (mut right, right_best)| {
+            match left_best.cmp(&right_best) {
+                std::cmp::Ordering::Less => (left, left_best),
+                std::cmp::Ordering::Equal => {
+                    left.append(&mut right);
+                    (left, left_best)
+                }
+                std::cmp::Ordering::Greater => (right, right_best),
+            }
+        })
+        // .min_by_key(|(_, total)| *total)
         {
             println!(
-                "The best result for {coin_count} coins is an average of {} coins, found in {:.2?}",
+                "The best result for {coin_count} coins is an average of {} coins, found in {:.2?} in {} possible solutions (printing at most 5)",
                 (total as f64) / (max_change as f64),
-                start.elapsed()
+                start.elapsed(),
+                solution.len()
             );
 
-            // for coins in solutions {
-            //     println!("  {:?}", coins);
-            // }
-            println!("  {:?}", solution);
+            for coins in solution.into_iter().take(5) {
+                println!("  {:?}", coins);
+            }
+            // println!("  {:?}", solution);
         }
     }
 }
