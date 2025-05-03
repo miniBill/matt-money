@@ -93,7 +93,7 @@ impl Iterator for IteratorState {
 }
 
 fn count_coins(max_change: Coin, coins: &Vec<Coin>) -> usize {
-    let mut counts: Vec<usize> = Vec::with_capacity(max_change as usize);
+    let mut counts: Vec<usize> = Vec::with_capacity(1 + max_change as usize);
     counts.push(0);
 
     for i in 1..=max_change {
